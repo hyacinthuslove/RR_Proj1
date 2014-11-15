@@ -1,0 +1,79 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
+
+
+## Loading and preprocessing the data
+
+``` {r}
+MyData <- read.csv(file="activity.csv", header=TRUE, sep=",")
+head(MyData)
+tail(MyData)
+summary(MyData)
+```
+## What is mean total number of steps taken per day?
+####1. Make a histogram of the total number of steps taken each day
+
+```{r hist, fig.width=8, fig.height=6}
+numberofstepsperday <- aggregate( formula = steps~date, data = MyData, FUN = sum ) 
+hist(numberofstepsperday$steps, main="Histogram of Steps Taken Each Day",
+      xlab="Steps Taken Per Day", col="red")
+```
+
+####2. Calculate and report the mean and median total number of steps taken per day
+```{r}
+meanData <- aggregate( formula = steps~date, data = MyData, FUN = mean )
+meanData
+medianData <- aggregate( formula = steps~date, data = MyData, FUN = mean )
+medianData
+```
+## What is the average daily activity pattern?
+
+####1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+```{r timeseries, fig.width=8, fig.height=6}
+meanData5minInterval <- aggregate( formula = steps~interval, data = MyData, FUN = mean )
+meanData5minInterval 
+plot(x=meanData5minInterval$interval, y=meanData5minInterval$steps, type="l", 
+      main="Average Number of Steps Taken Each Day for Each 5 min Interval",
+      xlab="5 Min Interval", ylab="Average Number of Steps Taken", col="red")
+
+```
+
+####2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r}
+maxstepatwhich5mininterval <- meanData5minInterval$interval[meanData5minInterval[,2]==max(meanData5minInterval$steps)]
+maxstepatwhich5mininterval
+```
+## Imputing missing values
+```{r}
+# Replace NA steps with 0
+MyData[is.na(MyData)] <- 0
+```
+
+
+## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+DayofWeek <- c("Weekend", "Weekday", "Weekday", "Weekday", "Weekday", 
+               "Weekday", "Weekend")[as.POSIXlt(MyData$date)$wday + 1]
+MyNewData <- cbind(MyData,DayofWeek)
+summary(MyNewData)
+
+weekendData <- aggregate( formula = steps~interval, data = subset(MyNewData,DayofWeek == "Weekend", select=c(1:4)), FUN = mean )
+
+weekdayData <- aggregate( formula = steps~interval, data = subset(MyNewData,DayofWeek == "Weekday", select=c(1:4)), FUN = mean )
+
+plot(x=weekendData$interval, y=weekendData$steps, type="l", 
+      main="Average Number of Steps Taken Each Day for Each 5 min Interval",
+      xlab="5 Min Interval", ylab="Average Number of Steps Taken", ylim=c(0,250), col="red")
+lines(x=weekdayData$interval, y=weekdayData$steps,col="blue")
+legend(x="topleft", c("Weekend","Weekday"),
+lty=c(1,1), # gives the legend appropriate symbols (lines)
+lwd=c(2.5,2.5),
+col=c("red","blue")) # gives the legend lines the correct color and width
+
+
+```
+

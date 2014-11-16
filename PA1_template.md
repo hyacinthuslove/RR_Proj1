@@ -1,4 +1,5 @@
 # Reproducible Research: Peer Assessment 1
+Peggy Ong  
 
 
 ## Loading and preprocessing the data
@@ -54,10 +55,10 @@ summary(MyData)
 ```r
 numberofstepsperday <- aggregate( formula = steps~date, data = MyData, FUN = sum ) 
 hist(numberofstepsperday$steps, main="Histogram of Steps Taken Each Day",
-      xlab="Steps Taken Per Day", col="red")
+      xlab="Steps Taken Per Day", col="purple")
 ```
 
-![](./PA1_template_files/figure-html/hist-1.png) 
+![](./PA1_template_files/figure-html/hist1-1.png) 
 
 ####2. Calculate and report the mean and median total number of steps taken per day
 
@@ -506,8 +507,52 @@ maxstepatwhich5mininterval
 ## Imputing missing values
 
 ```r
-# Replace NA steps with 0
-MyData[is.na(MyData)] <- 0
+# 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+sum(is.na(MyData))
+```
+
+```
+## [1] 2304
+```
+
+```r
+# 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+# 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+MyImputedData <- MyData
+
+MyImputedData[is.na(MyImputedData)] <- mean(meanData5minInterval$steps)
+summary(MyImputedData)
+```
+
+```
+##      steps                date          interval     
+##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
+##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
+##  Median :  0.00   2012-10-03:  288   Median :1177.5  
+##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
+##  3rd Qu.: 37.38   2012-10-05:  288   3rd Qu.:1766.2  
+##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
+##                   (Other)   :15840
+```
+
+
+```r
+# 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+```
+
+
+```r
+imputednumberofstepsperday <- aggregate( formula = steps~date, data = MyImputedData, FUN = sum ) 
+hist(imputednumberofstepsperday$steps, 
+     main="Histogram of Steps Taken Each Day (NA Imputed with Mean)",
+     xlab="Steps Per Day", col="red")
+```
+
+![](./PA1_template_files/figure-html/hist2-1.png) 
+
+```r
+# After imputing missing steps with mean of 5-minute intervals steps, the centre of the distribution is higher
 ```
 
 
@@ -515,8 +560,8 @@ MyData[is.na(MyData)] <- 0
 
 ```r
 DayofWeek <- c("Weekend", "Weekday", "Weekday", "Weekday", "Weekday", 
-               "Weekday", "Weekend")[as.POSIXlt(MyData$date)$wday + 1]
-MyNewData <- cbind(MyData,DayofWeek)
+               "Weekday", "Weekend")[as.POSIXlt(MyImputedData$date)$wday + 1]
+MyNewData <- cbind(MyImputedData,DayofWeek)
 summary(MyNewData)
 ```
 
@@ -525,8 +570,8 @@ summary(MyNewData)
 ##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0   Weekday:12960  
 ##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8   Weekend: 4608  
 ##  Median :  0.00   2012-10-03:  288   Median :1177.5                  
-##  Mean   : 32.48   2012-10-04:  288   Mean   :1177.5                  
-##  3rd Qu.:  0.00   2012-10-05:  288   3rd Qu.:1766.2                  
+##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5                  
+##  3rd Qu.: 37.38   2012-10-05:  288   3rd Qu.:1766.2                  
 ##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0                  
 ##                   (Other)   :15840
 ```
@@ -535,16 +580,28 @@ summary(MyNewData)
 weekendData <- aggregate( formula = steps~interval, data = subset(MyNewData,DayofWeek == "Weekend", select=c(1:4)), FUN = mean )
 
 weekdayData <- aggregate( formula = steps~interval, data = subset(MyNewData,DayofWeek == "Weekday", select=c(1:4)), FUN = mean )
+```
 
+
+
+```r
 plot(x=weekendData$interval, y=weekendData$steps, type="l", 
-      main="Average Number of Steps Taken Each Day for Each 5 min Interval",
-      xlab="5 Min Interval", ylab="Average Number of Steps Taken", ylim=c(0,250), col="red")
-lines(x=weekdayData$interval, y=weekdayData$steps,col="blue")
+     main="Average Number of Steps Taken for Each 5 min Interval of Each Day",
+     xaxt="n", xlab="Hour of the Day", 
+     ylab="Average Number of Steps Taken", ylim=c(0,250), col="red")
+
+lines(x=weekdayData$interval, y=weekdayData$steps, col="blue")
+axis(side=1, at=seq(0, 2400, 200), label = sprintf("%04d", seq(0,2400,200)) )
 legend(x="topleft", c("Weekend","Weekday"),
 lty=c(1,1), # gives the legend appropriate symbols (lines)
 lwd=c(2.5,2.5),
 col=c("red","blue")) # gives the legend lines the correct color and width
 ```
 
-![](./PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+![](./PA1_template_files/figure-html/comparedays-1.png) 
+
+
+#### Yes. There're differences between weekday and weekend activities.
+#### 1. People wake up later on weekends to start their activities compared to weekdays
+#### 2. There's lesser activities during the day between 1000 and 1700 on weekdays compared to weekends.
 

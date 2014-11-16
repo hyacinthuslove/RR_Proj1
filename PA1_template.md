@@ -515,13 +515,40 @@ sum(is.na(MyData))
 ## [1] 2304
 ```
 
+
 ```r
 # 2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
+# Use mean steps of each 5-minute interval across all days.
+```
+
+
+```r
 # 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 MyImputedData <- MyData
 
 MyImputedData[is.na(MyImputedData)] <- mean(meanData5minInterval$steps)
+```
+
+
+```r
+# 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+summary(MyData)
+```
+
+```
+##      steps                date          interval     
+##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
+##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
+##  Median :  0.00   2012-10-03:  288   Median :1177.5  
+##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
+##  3rd Qu.: 12.00   2012-10-05:  288   3rd Qu.:1766.2  
+##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
+##  NA's   :2304     (Other)   :15840
+```
+
+```r
 summary(MyImputedData)
 ```
 
@@ -536,9 +563,8 @@ summary(MyImputedData)
 ##                   (Other)   :15840
 ```
 
-
 ```r
-# 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+# After imputing missing steps with mean of 5-minute intervals steps, the centre of the distribution of total daily number of steps taken is higher.
 ```
 
 
@@ -551,10 +577,6 @@ hist(imputednumberofstepsperday$steps,
 
 ![](./PA1_template_files/figure-html/hist2-1.png) 
 
-```r
-# After imputing missing steps with mean of 5-minute intervals steps, the centre of the distribution is higher
-```
-
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -562,29 +584,38 @@ hist(imputednumberofstepsperday$steps,
 DayofWeek <- c("Weekend", "Weekday", "Weekday", "Weekday", "Weekday", 
                "Weekday", "Weekend")[as.POSIXlt(MyImputedData$date)$wday + 1]
 MyNewData <- cbind(MyImputedData,DayofWeek)
-summary(MyNewData)
-```
 
-```
-##      steps                date          interval        DayofWeek    
-##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0   Weekday:12960  
-##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8   Weekend: 4608  
-##  Median :  0.00   2012-10-03:  288   Median :1177.5                  
-##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5                  
-##  3rd Qu.: 37.38   2012-10-05:  288   3rd Qu.:1766.2                  
-##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0                  
-##                   (Other)   :15840
-```
+# This is used for comparedayspanel plot
+MyMeanNewData <- aggregate( formula = steps~interval+DayofWeek, 
+                            data = MyNewData, FUN = mean )
 
-```r
-weekendData <- aggregate( formula = steps~interval, data = subset(MyNewData,DayofWeek == "Weekend", select=c(1:4)), FUN = mean )
+# These are used for comparedays plot
+weekendData <- aggregate( formula = steps~interval, 
+                          data = subset(MyNewData,DayofWeek == "Weekend", 
+                                        select=c(1:4)), FUN = mean )
 
-weekdayData <- aggregate( formula = steps~interval, data = subset(MyNewData,DayofWeek == "Weekday", select=c(1:4)), FUN = mean )
+weekdayData <- aggregate( formula = steps~interval, 
+                          data = subset(MyNewData,DayofWeek == "Weekday", 
+                                        select=c(1:4)), FUN = mean )
 ```
-
 
 
 ```r
+library(lattice)
+
+xyplot(steps~interval|DayofWeek, data=MyMeanNewData, type='l',
+   layout=c(1,2),
+   xlab="Interval", ylab="Number of Steps", 
+   main="Average Number of Steps Taken for Each 5 min Interval")
+```
+
+![](./PA1_template_files/figure-html/comparedayspanel-1.png) 
+
+
+
+```r
+# I find this plot is easier to visualize compared to panel plot required
+
 plot(x=weekendData$interval, y=weekendData$steps, type="l", 
      main="Average Number of Steps Taken for Each 5 min Interval of Each Day",
      xaxt="n", xlab="Hour of the Day", 
